@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Log</title>
+
+    <style>
+        /* ==============================
+           基本設定
+        ============================== */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f3f4f6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: #222;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+
+        /* ==============================
+           入力項目
+        ============================== */
+
+        .entry {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        select,
+        input {
+            font-size: 16px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .type-select {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        input[type="time"] {
+            min-width: 125px;
+        }
+
+        input[type="number"] {
+            width: 130px;
+        }
+
+        .label {
+            font-size: 13px;
+            color: #666;
+            margin: 8px 0 4px;
+        }
+
+
+        /* ==============================
+           ボタン
+        ============================== */
+
+        button {
+            border: none;
+            border-radius: 8px;
+            padding: 11px 16px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .copy-btn {
+            width: 100%;
+            background: #2563eb;
+            color: white;
+            font-size: 18px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .copy-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .add-btn {
+            background: #16a34a;
+            color: white;
+        }
+
+        .add-type-btn,
+        .add-weight-type-btn {
+            background: #e5e7eb;
+            color: #222;
+        }
+
+        .add-type-btn {
+            margin-top: 10px;
+        }
+
+        .add-weight-type-btn {
+            margin-top: 8px;
+        }
+
+        .delete-btn {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 8px 11px;
+        }
+
+
+        /* ==============================
+           出力欄
+        ============================== */
+
+        .output {
+            margin-top: 20px;
+            background: #111827;
+            color: #f9fafb;
+            border-radius: 10px;
+            padding: 15px;
+            white-space: pre-wrap;
+            min-height: 70px;
+            font-family: monospace;
+        }
+
+
+        /* ==============================
+           Time / Weight 切り替え
+        ============================== */
+
+        .mode {
+            display: flex;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .mode button {
+            background: #e5e7eb;
+        }
+
+        .mode button.active {
+            background: #2563eb;
+            color: white;
+        }
+
+
+        /* ==============================
+           Time入力
+        ============================== */
+
+        .time-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .time-fields > div {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .time-fields .label {
+            width: 55px;
+            margin: 0;
+        }
+
+
+        /* ==============================
+           Weight入力
+        ============================== */
+
+        .weight-fields {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .weight-type-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .weight-type-select {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .weight-input-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .entry.weight-mode .time-fields {
+            display: none;
+        }
+
+        .entry.weight-mode .weight-fields {
+            display: flex;
+        }
+
+
+        /* ==============================
+           スマートフォン用
+        ============================== */
+
+        @media (max-width: 500px) {
+            body {
+                padding: 12px;
+            }
+
+            .row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .type-select,
+            .weight-type-select,
+            input[type="time"],
+            input[type="number"] {
+                width: 100%;
+            }
+
+            .delete-btn {
+                align-self: flex-end;
+            }
+
+            .time-fields > div {
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Work Log</h1>
+
+        <!-- 入力項目 -->
+        <div id="entries"></div>
+
+        <!-- 項目を追加 -->
+        <button class="add-btn" onclick="addEntry()">
+            ＋ Add item
+        </button>
+
+        <br>
+
+        <!-- 通常の項目タイプを追加 -->
+        <button class="add-type-btn" onclick="addNewType()">
+            ＋ Add new item type
+        </button>
+
+        <!-- コピー -->
+        <button class="copy-btn" onclick="copyText()">
+            📋 Copy
+        </button>
+
+        <!-- コピー内容 -->
+        <div class="output" id="output">
+            Your copied text will appear here.
+        </div>
+
+    </div>
+
+
+    <script>
+        /* ==================================================
+           初期データ
+        ================================================== */
+
+        const defaultTypes = [
+            "Sanding time",
+            "Drying time",
+            "Mixing time",
+            "Polishing time",
+            "Cleaning time",
+            "Inspection time",
+            "Preparation time",
+            "Assembly time",
+            "Material weight",
+            "Other"
+        ];
+
+        const defaultWeightTypes = [
+            "Resin",
+            "Powder",
+            "Paint",
+            "Glue",
+            "Other"
+        ];
+
+
+        /* ==================================================
+           保存データを読み込む
+        ================================================== */
+
+        let types =
+            JSON.parse(localStorage.getItem("workLogTypes")) ||
+            defaultTypes;
+
+        let weightTypes =
+            JSON.parse(localStorage.getItem("workLogWeightTypes")) ||
+            defaultWeightTypes;
+
+        const entries =
+            document.getElementById("entries");
+
+
+        /* ==================================================
+           新しい入力項目を追加
+        ================================================== */
+
+        function addEntry() {
+
+            const entry =
+                document.createElement("div");
+
+            entry.className = "entry";
+
+            entry.innerHTML = `
+
+                <div class="row">
+
+                    <select
+                        class="type-select"
+                        onchange="typeChanged(this)"
+                    >
+                        ${types
+                            .map(type => `
+                                <option value="${escapeHtml(type)}">
+                                    ${escapeHtml(type)}
+                                </option>
+                            `)
+                            .join("")}
+                    </select>
+
+                    <button
+                        class="delete-btn"
+                        onclick="
+                            this.closest('.entry').remove();
+                            updateOutput();
+                        "
+                    >
+                        ✕
+                    </button>
+
+                </div>
+
+
+                <div class="mode">
+
+                    <button
+                        class="time-mode active"
+                        onclick="setMode(this, 'time')"
+                    >
+                        Time
+                    </button>
+
+                    <button
+                        class="weight-mode-btn"
+                        onclick="setMode(this, 'weight')"
+                    >
+                        Weight
+                    </button>
+
+                </div>
+
+
+                <!-- Time入力 -->
+
+                <div class="time-fields">
+
+                    <div>
+
+                        <div class="label">
+                            Start
+                        </div>
+
+                        <input
+                            type="time"
+                            class="start-time"
+                            onchange="updateOutput()"
+                        >
+
+                    </div>
+
+
+                    <div>
+
+                        <div class="label">
+                            Finish
+                        </div>
+
+                        <input
+                            type="time"
+                            class="finish-time"
+                            onchange="updateOutput()"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- Weight入力 -->
+
+                <div class="weight-fields">
+
+                    <div class="weight-type-row">
+
+                        <select
+                            class="weight-type-select"
+                            onchange="updateOutput()"
+                        >
+
+                            ${weightTypes
+                                .map(type => `
+                                    <option value="${escapeHtml(type)}">
+                                        ${escapeHtml(type)}
+                                    </option>
+                                `)
+                                .join("")}
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="weight-input-row">
+
+                        <input
+                            type="number"
+                            class="weight-value"
+                            placeholder="Weight"
+                            step="0.1"
+                            onchange="updateOutput()"
+                        >
+
+                        <span>g</span>
+
+                    </div>
+
+
+                    <button
+                        class="add-weight-type-btn"
+                        onclick="addNewWeightType()"
+                    >
+                        ＋ Add weight type
+                    </button>
+
+                </div>
+            `;
+
+            entries.appendChild(entry);
+
+            updateOutput();
+        }
+
+
+        /* ==================================================
+           Time / Weight モード切り替え
+        ================================================== */
+
+        function setMode(button, mode) {
+
+            const entry =
+                button.closest(".entry");
+
+            const timeButton =
+                entry.querySelector(".time-mode");
+
+            const weightButton =
+                entry.querySelector(".weight-mode-btn");
+
+
+            if (mode === "time") {
+
+                entry.classList.remove("weight-mode");
+
+                timeButton.classList.add("active");
+                weightButton.classList.remove("active");
+
+            } else {
+
+                entry.classList.add("weight-mode");
+
+                timeButton.classList.remove("active");
+                weightButton.classList.add("active");
+            }
+
+            updateOutput();
+        }
+
+
+        /* ==================================================
+           項目変更時
+        ================================================== */
+
+        function typeChanged(select) {
+
+            const entry =
+                select.closest(".entry");
+
+            const value =
+                select.value.toLowerCase();
+
+
+            /*
+                項目名に以下の文字が入っている場合、
+                自動的にWeightモードへ切り替える
+
+                weight
+                material
+                gram
+            */
+
+            if (
+                value.includes("weight") ||
+                value.includes("material") ||
+                value.includes("gram")
+            ) {
+
+                setMode(
+                    entry.querySelector(".weight-mode-btn"),
+                    "weight"
+                );
+
+            } else {
+
+                setMode(
+                    entry.querySelector(".time-mode"),
+                    "time"
+                );
+            }
+        }
+
+
+        /* ==================================================
+           時刻を変換
+           例：10:20 → 10:20am
+        ================================================== */
+
+        function formatTime(time) {
+
+            if (!time) {
+                return "";
+            }
+
+            const [hourString, minute] =
+                time.split(":");
+
+            let hour =
+                parseInt(hourString);
+
+            const ampm =
+                hour >= 12 ? "pm" : "am";
+
+            hour =
+                hour % 12;
+
+            if (hour === 0) {
+                hour = 12;
+            }
+
+            return `${hour}:${minute}${ampm}`;
+        }
+
+
+        /* ==================================================
+           コピー用テキストを作成
+        ================================================== */
+
+        function updateOutput() {
+
+            const allEntries =
+                document.querySelectorAll(".entry");
+
+            const lines = [];
+
+
+            allEntries.forEach(entry => {
+
+                const type =
+                    entry.querySelector(".type-select").value;
+
+
+                /* ------------------------------
+                   Weight
+                ------------------------------ */
+
+                if (
+                    entry.classList.contains("weight-mode")
+                ) {
+
+                    const weightType =
+                        entry
+                            .querySelector(".weight-type-select")
+                            .value;
+
+                    const weight =
+                        entry
+                            .querySelector(".weight-value")
+                            .value;
+
+
+                    if (weight) {
+
+                        lines.push(
+                            `${type}\n${weightType}\n${weight}g`
+                        );
+                    }
+
+                    return;
+                }
+
+
+                /* ------------------------------
+                   Time
+                ------------------------------ */
+
+                const start =
+                    entry
+                        .querySelector(".start-time")
+                        .value;
+
+                const finish =
+                    entry
+                        .querySelector(".finish-time")
+                        .value;
+
+
+                if (start && finish) {
+
+                    lines.push(
+                        `${type}\n` +
+                        `start ${formatTime(start)}\n` +
+                        `finish ${formatTime(finish)}`
+                    );
+
+                } else if (start) {
+
+                    lines.push(
+                        `${type}\n` +
+                        `start ${formatTime(start)}`
+                    );
+
+                } else if (finish) {
+
+                    lines.push(
+                        `${type}\n` +
+                        `finish ${formatTime(finish)}`
+                    );
+                }
+
+            });
+
+
+            document.getElementById("output").textContent =
+                lines.length
+                    ? lines.join("\n\n")
+                    : "Your copied text will appear here.";
+        }
+
+
+        /* ==================================================
+           コピー
+        ================================================== */
+
+        async function copyText() {
+
+            updateOutput();
+
+            const text =
+                document.getElementById("output").textContent;
+
+
+            if (
+                !text ||
+                text === "Your copied text will appear here."
+            ) {
+                return;
+            }
+
+
+            try {
+
+                await navigator.clipboard.writeText(text);
+
+                const button =
+                    document.querySelector(".copy-btn");
+
+                const original =
+                    button.textContent;
+
+                button.textContent =
+                    "✓ Copied!";
+
+
+                setTimeout(() => {
+
+                    button.textContent =
+                        original;
+
+                }, 1200);
+
+
+            } catch (error) {
+
+                alert(
+                    "Copy failed. Please select and copy the text manually."
+                );
+            }
+        }
+
+
+        /* ==================================================
+           通常の項目タイプを追加
+        ================================================== */
+
+        function addNewType() {
+
+            const newType =
+                prompt("Enter a new item type:");
+
+
+            if (
+                !newType ||
+                !newType.trim()
+            ) {
+                return;
+            }
+
+
+            const cleanType =
+                newType.trim();
+
+
+            if (types.includes(cleanType)) {
+                return;
+            }
+
+
+            types.push(cleanType);
+
+
+            localStorage.setItem(
+                "workLogTypes",
+                JSON.stringify(types)
+            );
+
+
+            // 現在表示されている全プルダウンに追加
+
+            document
+                .querySelectorAll(".type-select")
+                .forEach(select => {
+
+                    const option =
+                        document.createElement("option");
+
+                    option.value =
+                        cleanType;
+
+                    option.textContent =
+                        cleanType;
+
+                    select.appendChild(option);
+                });
+        }
+
+
+        /* ==================================================
+           Weight項目を追加
+        ================================================== */
+
+        function addNewWeightType() {
+
+            const newType =
+                prompt("Enter a new weight type:");
+
+
+            if (
+                !newType ||
+                !newType.trim()
+            ) {
+                return;
+            }
+
+
+            const cleanType =
+                newType.trim();
+
+
+            if (
+                weightTypes.includes(cleanType)
+            ) {
+                return;
+            }
+
+
+            weightTypes.push(cleanType);
+
+
+            localStorage.setItem(
+                "workLogWeightTypes",
+                JSON.stringify(weightTypes)
+            );
+
+
+            // 現在表示されている全Weightプルダウンに追加
+
+            document
+                .querySelectorAll(".weight-type-select")
+                .forEach(select => {
+
+                    const option =
+                        document.createElement("option");
+
+                    option.value =
+                        cleanType;
+
+                    option.textContent =
+                        cleanType;
+
+                    select.appendChild(option);
+                });
+        }
+
+
+        /* ==================================================
+           HTML特殊文字対策
+        ================================================== */
+
+        function escapeHtml(text) {
+
+            const div =
+                document.createElement("div");
+
+            div.textContent =
+                text;
+
+            return div.innerHTML;
+        }
+
+
+        /* ==================================================
+           最初の1行を表示
+        ================================================== */
+
+        addEntry();
+
+    </script>
+
+</body>
+</html>

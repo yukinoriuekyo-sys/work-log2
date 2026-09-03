@@ -125,6 +125,13 @@
             padding: 8px 11px;
         }
 
+        .clear-btn {
+            background: #6b7280;
+            color: white;
+            margin-top: 10px;
+            width: 100%;
+        }
+
 
         /* ==============================
            出力欄
@@ -284,6 +291,11 @@
             📋 Copy
         </button>
 
+        <!-- データクリア -->
+        <button class="clear-btn" onclick="clearSavedData()">
+            🗑 Clear saved data
+        </button>
+
         <!-- コピー内容 -->
         <div class="output" id="output">
             Your copied text will appear here.
@@ -333,14 +345,6 @@
 
         /* ==================================================
            材料の配合比率
-
-           基準材料を4として計算
-
-           Top cort12
-           4 : 1 : 0.5
-
-           Filler5
-           4 : 1
         ================================================== */
 
         const materialRatios = {
@@ -375,12 +379,21 @@
 
 
         /* ==================================================
-           保存データ
+           保存用キー
+        ================================================== */
+
+        const TYPES_SAVE_KEY = "workLogTypes";
+
+        const DATA_SAVE_KEY = "workLogCurrentData";
+
+
+        /* ==================================================
+           作業項目一覧
         ================================================== */
 
         let types =
             JSON.parse(
-                localStorage.getItem("workLogTypes")
+                localStorage.getItem(TYPES_SAVE_KEY)
             ) || defaultTypes;
 
 
@@ -392,7 +405,7 @@
            新しい入力項目を追加
         ================================================== */
 
-        function addEntry() {
+        function addEntry(savedData = null) {
 
             const entry =
                 document.createElement("div");
@@ -427,6 +440,7 @@
                         onclick="
                             this.closest('.entry').remove();
                             updateOutput();
+                            saveCurrentData();
                         "
                     >
                         ✕
@@ -468,7 +482,7 @@
                         <input
                             type="time"
                             class="start-time"
-                            onchange="updateOutput()"
+                            oninput="updateOutput(); saveCurrentData();"
                         >
 
                     </div>
@@ -483,7 +497,7 @@
                         <input
                             type="time"
                             class="finish-time"
-                            onchange="updateOutput()"
+                            oninput="updateOutput(); saveCurrentData();"
                         >
 
                     </div>
@@ -528,6 +542,83 @@
 
             entries.appendChild(entry);
 
+
+            /* ------------------------------------------
+               保存データがある場合は復元
+            ------------------------------------------ */
+
+            if (savedData) {
+
+                const select =
+                    entry.querySelector(".type-select");
+
+                if (savedData.type) {
+
+                    select.value =
+                        savedData.type;
+
+                }
+
+
+                const start =
+                    entry.querySelector(".start-time");
+
+                const finish =
+                    entry.querySelector(".finish-time");
+
+
+                if (savedData.start) {
+                    start.value = savedData.start;
+                }
+
+                if (savedData.finish) {
+                    finish.value = savedData.finish;
+                }
+
+
+                /* --------------------------------------
+                   モード復元
+                -------------------------------------- */
+
+                if (savedData.mode === "weight") {
+
+                    setMode(
+                        entry.querySelector(".weight-mode-btn"),
+                        "weight",
+                        false
+                    );
+
+                }
+
+
+                /* --------------------------------------
+                   材料重量復元
+                -------------------------------------- */
+
+                if (savedData.materials) {
+
+                    Object.entries(
+                        savedData.materials
+                    ).forEach(
+                        ([material, value]) => {
+
+                            const input =
+                                entry.querySelector(
+                                    `[data-material="${material}"]`
+                                );
+
+                            if (input) {
+                                input.value = value;
+                            }
+
+                        }
+                    );
+
+                }
+
+            }
+
+
             updateOutput();
 
         }
@@ -537,7 +628,7 @@
            Time / Weight モード切り替え
         ================================================== */
 
-        function setMode(button, mode) {
+        function setMode(button, mode, shouldSave = true) {
 
             const entry =
                 button.closest(".entry");
@@ -571,6 +662,11 @@
 
 
             updateOutput();
+
+
+            if (shouldSave) {
+                saveCurrentData();
+            }
 
         }
 
@@ -613,6 +709,9 @@
                 );
 
             }
+
+
+            saveCurrentData();
 
         }
 
@@ -684,14 +783,13 @@
 
             updateOutput();
 
+            saveCurrentData();
+
         }
 
 
         /* ==================================================
            時刻を変換
-           
-           例：
-           10:20 → 10:20am
         ================================================== */
 
         function formatTime(time) {
@@ -788,12 +886,6 @@
 
         function formatWeight(value) {
 
-            /*
-               100.000 → 100
-               25.000 → 25
-               12.500 → 12.5
-            */
-
             return Number(
                 value.toFixed(3)
             ).toString();
@@ -835,11 +927,6 @@
                     const weightOutput =
                         getWeightOutput(entry);
 
-
-                    /*
-                       Material weightを選択していても
-                       全部0gなら何も出力しない
-                    */
 
                     if (weightOutput) {
 
@@ -918,6 +1005,196 @@
                 lines.length
                     ? lines.join("\n\n")
                     : "Your copied text will appear here.";
+
+        }
+
+
+        /* ==================================================
+           現在のページ状態を保存
+        ================================================== */
+
+        function saveCurrentData() {
+
+            const savedEntries = [];
+
+
+            document
+                .querySelectorAll(".entry")
+                .forEach(entry => {
+
+                    const type =
+                        entry.querySelector(
+                            ".type-select"
+                        ).value;
+
+
+                    const start =
+                        entry.querySelector(
+                            ".start-time"
+                        ).value;
+
+
+                    const finish =
+                        entry.querySelector(
+                            ".finish-time"
+                        ).value;
+
+
+                    const mode =
+                        entry.classList.contains(
+                            "weight-mode"
+                        )
+                            ? "weight"
+                            : "time";
+
+
+                    const materials = {};
+
+
+                    entry
+                        .querySelectorAll(
+                            ".material-input"
+                        )
+                        .forEach(input => {
+
+                            materials[
+                                input.dataset.material
+                            ] =
+                                input.value;
+
+                        });
+
+
+                    savedEntries.push({
+
+                        type: type,
+
+                        mode: mode,
+
+                        start: start,
+
+                        finish: finish,
+
+                        materials: materials
+
+                    });
+
+                });
+
+
+            localStorage.setItem(
+
+                DATA_SAVE_KEY,
+
+                JSON.stringify(
+                    savedEntries
+                )
+
+            );
+
+        }
+
+
+        /* ==================================================
+           保存データを復元
+        ================================================== */
+
+        function loadSavedData() {
+
+            const saved =
+                localStorage.getItem(
+                    DATA_SAVE_KEY
+                );
+
+
+            /* ------------------------------------------
+               保存データがない場合
+            ------------------------------------------ */
+
+            if (!saved) {
+
+                addEntry();
+
+                return;
+
+            }
+
+
+            try {
+
+                const savedEntries =
+                    JSON.parse(saved);
+
+
+                if (
+                    !Array.isArray(savedEntries) ||
+                    savedEntries.length === 0
+                ) {
+
+                    addEntry();
+
+                    return;
+
+                }
+
+
+                savedEntries.forEach(
+                    savedEntry => {
+
+                        addEntry(savedEntry);
+
+                    }
+                );
+
+
+                updateOutput();
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "保存データの復元に失敗しました。",
+                    error
+                );
+
+
+                addEntry();
+
+            }
+
+        }
+
+
+        /* ==================================================
+           保存データを削除
+        ================================================== */
+
+        function clearSavedData() {
+
+            const result =
+                confirm(
+                    "保存されている作業データをすべて削除しますか？"
+                );
+
+
+            if (!result) {
+                return;
+            }
+
+
+            localStorage.removeItem(
+                DATA_SAVE_KEY
+            );
+
+
+            entries.innerHTML = "";
+
+
+            addEntry();
+
+
+            updateOutput();
 
         }
 
@@ -1012,10 +1289,14 @@
 
 
         /* ==================================================
-           最初の1行を表示
+           ページ読み込み
+           
+           保存データがあれば復元
+           なければ最初の1行を表示
         ================================================== */
 
-        addEntry();
+        loadSavedData();
+
 
     </script>
 

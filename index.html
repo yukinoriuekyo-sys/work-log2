@@ -126,10 +126,14 @@
         }
 
         .clear-btn {
+            width: 100%;
             background: #6b7280;
             color: white;
             margin-top: 10px;
-            width: 100%;
+        }
+
+        .clear-btn:hover {
+            background: #4b5563;
         }
 
 
@@ -278,26 +282,58 @@
 
         <h1>Work Log</h1>
 
-        <!-- 入力項目 -->
+
+        <!-- ==========================================
+             入力項目
+        =========================================== -->
+
         <div id="entries"></div>
 
-        <!-- 項目を追加 -->
-        <button class="add-btn" onclick="addEntry()">
+
+        <!-- ==========================================
+             項目追加
+        =========================================== -->
+
+        <button
+            class="add-btn"
+            onclick="addEntry()"
+        >
             ＋ Add item
         </button>
 
-        <!-- コピー -->
-        <button class="copy-btn" onclick="copyText()">
+
+        <!-- ==========================================
+             コピー
+        =========================================== -->
+
+        <button
+            class="copy-btn"
+            onclick="copyText()"
+        >
             📋 Copy
         </button>
 
-        <!-- データクリア -->
-        <button class="clear-btn" onclick="clearSavedData()">
+
+        <!-- ==========================================
+             保存データ削除
+        =========================================== -->
+
+        <button
+            class="clear-btn"
+            onclick="clearSavedData()"
+        >
             🗑 Clear saved data
         </button>
 
-        <!-- コピー内容 -->
-        <div class="output" id="output">
+
+        <!-- ==========================================
+             コピー内容
+        =========================================== -->
+
+        <div
+            class="output"
+            id="output"
+        >
             Your copied text will appear here.
         </div>
 
@@ -306,8 +342,9 @@
 
     <script>
 
+
         /* ==================================================
-           初期データ
+           作業項目
         ================================================== */
 
         const defaultTypes = [
@@ -327,9 +364,10 @@
 
 
         /* ==================================================
-           Material weight の5種類
+           Material weight の種類
 
-           今後材料を増やす場合はここに追加
+           材料を追加するときは
+           この配列に追加するだけ
         ================================================== */
 
         const weightTypes = [
@@ -345,18 +383,24 @@
 
         /* ==================================================
            材料の配合比率
+
+           Topcoat12
+           4 : 1 : 0.5
+
+           Filler5
+           4 : 1
         ================================================== */
 
         const materialRatios = {
 
-            "Top cort12": {
+            "Topcoat12": {
 
                 base: 4,
 
                 components: {
 
-                    "Top cort12 hardner": 1,
-                    "Top cort12 thinner": 0.5
+                    "Topcoat12 hardener": 1,
+                    "Topcoat12 thinner": 0.5
 
                 }
 
@@ -379,26 +423,26 @@
 
 
         /* ==================================================
-           保存用キー
+           LocalStorage 保存キー
         ================================================== */
 
-        const TYPES_SAVE_KEY = "workLogTypes";
+        const DATA_SAVE_KEY =
+            "workLogCurrentData";
 
-        const DATA_SAVE_KEY = "workLogCurrentData";
+
+        /* ==================================================
+           DOM
+        ================================================== */
+
+        const entries =
+            document.getElementById("entries");
 
 
         /* ==================================================
            作業項目一覧
         ================================================== */
 
-        let types =
-            JSON.parse(
-                localStorage.getItem(TYPES_SAVE_KEY)
-            ) || defaultTypes;
-
-
-        const entries =
-            document.getElementById("entries");
+        let types = defaultTypes;
 
 
         /* ==================================================
@@ -410,10 +454,16 @@
             const entry =
                 document.createElement("div");
 
-            entry.className = "entry";
+
+            entry.className =
+                "entry";
 
 
             entry.innerHTML = `
+
+                <!-- ==========================
+                     項目選択
+                =========================== -->
 
                 <div class="row">
 
@@ -425,7 +475,9 @@
                         ${types
                             .map(type => `
 
-                                <option value="${escapeHtml(type)}">
+                                <option
+                                    value="${escapeHtml(type)}"
+                                >
                                     ${escapeHtml(type)}
                                 </option>
 
@@ -437,11 +489,7 @@
 
                     <button
                         class="delete-btn"
-                        onclick="
-                            this.closest('.entry').remove();
-                            updateOutput();
-                            saveCurrentData();
-                        "
+                        onclick="deleteEntry(this)"
                     >
                         ✕
                     </button>
@@ -449,9 +497,14 @@
                 </div>
 
 
+                <!-- ==========================
+                     Time / Weight
+                =========================== -->
+
                 <div class="mode">
 
                     <button
+                        type="button"
                         class="time-mode active"
                         onclick="setMode(this, 'time')"
                     >
@@ -460,6 +513,7 @@
 
 
                     <button
+                        type="button"
                         class="weight-mode-btn"
                         onclick="setMode(this, 'weight')"
                     >
@@ -469,7 +523,9 @@
                 </div>
 
 
-                <!-- Time入力 -->
+                <!-- ==========================
+                     Time入力
+                =========================== -->
 
                 <div class="time-fields">
 
@@ -482,7 +538,7 @@
                         <input
                             type="time"
                             class="start-time"
-                            oninput="updateOutput(); saveCurrentData();"
+                            oninput="inputChanged()"
                         >
 
                     </div>
@@ -497,7 +553,7 @@
                         <input
                             type="time"
                             class="finish-time"
-                            oninput="updateOutput(); saveCurrentData();"
+                            oninput="inputChanged()"
                         >
 
                     </div>
@@ -505,7 +561,9 @@
                 </div>
 
 
-                <!-- Weight入力 -->
+                <!-- ==========================
+                     Weight入力
+                =========================== -->
 
                 <div class="weight-fields">
 
@@ -518,6 +576,7 @@
                                     ${escapeHtml(type)}
                                 </span>
 
+
                                 <input
                                     type="number"
                                     class="material-input"
@@ -528,7 +587,10 @@
                                     oninput="materialInputChanged(this)"
                                 >
 
-                                <span>g</span>
+
+                                <span>
+                                    g
+                                </span>
 
                             </div>
 
@@ -543,59 +605,110 @@
             entries.appendChild(entry);
 
 
-            /* ------------------------------------------
-               保存データがある場合は復元
-            ------------------------------------------ */
+            /* ==================================================
+               保存データがある場合
+            ================================================== */
 
             if (savedData) {
 
                 const select =
-                    entry.querySelector(".type-select");
+                    entry.querySelector(
+                        ".type-select"
+                    );
+
+
+                /* ------------------------------
+                   項目
+                ------------------------------ */
 
                 if (savedData.type) {
 
-                    select.value =
-                        savedData.type;
+                    const optionExists =
+                        Array.from(
+                            select.options
+                        ).some(
+                            option =>
+                                option.value === savedData.type
+                        );
+
+
+                    if (optionExists) {
+
+                        select.value =
+                            savedData.type;
+
+                    }
 
                 }
 
 
-                const start =
-                    entry.querySelector(".start-time");
+                /* ------------------------------
+                   Start
+                ------------------------------ */
 
-                const finish =
-                    entry.querySelector(".finish-time");
+                const start =
+                    entry.querySelector(
+                        ".start-time"
+                    );
 
 
                 if (savedData.start) {
-                    start.value = savedData.start;
+
+                    start.value =
+                        savedData.start;
+
                 }
+
+
+                /* ------------------------------
+                   Finish
+                ------------------------------ */
+
+                const finish =
+                    entry.querySelector(
+                        ".finish-time"
+                    );
+
 
                 if (savedData.finish) {
-                    finish.value = savedData.finish;
+
+                    finish.value =
+                        savedData.finish;
+
                 }
 
 
-                /* --------------------------------------
-                   モード復元
-                -------------------------------------- */
+                /* ------------------------------
+                   Weight
+                ------------------------------ */
 
-                if (savedData.mode === "weight") {
+                if (
+                    savedData.mode ===
+                    "weight"
+                ) {
 
                     setMode(
-                        entry.querySelector(".weight-mode-btn"),
+
+                        entry.querySelector(
+                            ".weight-mode-btn"
+                        ),
+
                         "weight",
+
                         false
+
                     );
 
                 }
 
 
-                /* --------------------------------------
-                   材料重量復元
-                -------------------------------------- */
+                /* ------------------------------
+                   材料重量
+                ------------------------------ */
 
-                if (savedData.materials) {
+                if (
+                    savedData.materials
+                ) {
 
                     Object.entries(
                         savedData.materials
@@ -604,11 +717,15 @@
 
                             const input =
                                 entry.querySelector(
-                                    `[data-material="${material}"]`
+                                    `[data-material="${escapeHtml(material)}"]`
                                 );
 
+
                             if (input) {
-                                input.value = value;
+
+                                input.value =
+                                    value;
+
                             }
 
                         }
@@ -625,38 +742,101 @@
 
 
         /* ==================================================
-           Time / Weight モード切り替え
+           入力変更
         ================================================== */
 
-        function setMode(button, mode, shouldSave = true) {
+        function inputChanged() {
+
+            updateOutput();
+
+            saveCurrentData();
+
+        }
+
+
+        /* ==================================================
+           項目削除
+        ================================================== */
+
+        function deleteEntry(button) {
+
+            const entry =
+                button.closest(".entry");
+
+
+            if (entry) {
+
+                entry.remove();
+
+            }
+
+
+            updateOutput();
+
+            saveCurrentData();
+
+        }
+
+
+        /* ==================================================
+           Time / Weight 切り替え
+        ================================================== */
+
+        function setMode(
+            button,
+            mode,
+            shouldSave = true
+        ) {
 
             const entry =
                 button.closest(".entry");
 
 
             const timeButton =
-                entry.querySelector(".time-mode");
+                entry.querySelector(
+                    ".time-mode"
+                );
 
 
             const weightButton =
-                entry.querySelector(".weight-mode-btn");
+                entry.querySelector(
+                    ".weight-mode-btn"
+                );
 
 
             if (mode === "time") {
 
-                entry.classList.remove("weight-mode");
+                entry.classList.remove(
+                    "weight-mode"
+                );
 
-                timeButton.classList.add("active");
 
-                weightButton.classList.remove("active");
+                timeButton.classList.add(
+                    "active"
+                );
 
-            } else {
 
-                entry.classList.add("weight-mode");
+                weightButton.classList.remove(
+                    "active"
+                );
 
-                timeButton.classList.remove("active");
+            }
 
-                weightButton.classList.add("active");
+            else {
+
+                entry.classList.add(
+                    "weight-mode"
+                );
+
+
+                timeButton.classList.remove(
+                    "active"
+                );
+
+
+                weightButton.classList.add(
+                    "active"
+                );
 
             }
 
@@ -665,51 +845,69 @@
 
 
             if (shouldSave) {
+
                 saveCurrentData();
+
             }
 
         }
 
 
         /* ==================================================
-           項目変更時
+           項目変更
         ================================================== */
 
         function typeChanged(select) {
-
-            const entry =
-                select.closest(".entry");
-
 
             const value =
                 select.value.toLowerCase();
 
 
+            const entry =
+                select.closest(".entry");
+
+
             /*
-               Material weightの場合、
-               自動的にWeightへ切り替え
+               Material weightの場合
+               自動的にWeightへ変更
             */
 
             if (
+
                 value.includes("weight") ||
                 value.includes("material") ||
                 value.includes("gram")
+
             ) {
 
                 setMode(
-                    entry.querySelector(".weight-mode-btn"),
+
+                    entry.querySelector(
+                        ".weight-mode-btn"
+                    ),
+
                     "weight"
-                );
 
-            } else {
-
-                setMode(
-                    entry.querySelector(".time-mode"),
-                    "time"
                 );
 
             }
 
+            else {
+
+                setMode(
+
+                    entry.querySelector(
+                        ".time-mode"
+                    ),
+
+                    "time"
+
+                );
+
+            }
+
+
+            updateOutput();
 
             saveCurrentData();
 
@@ -717,7 +915,7 @@
 
 
         /* ==================================================
-           材料重量入力時
+           材料重量入力
         ================================================== */
 
         function materialInputChanged(input) {
@@ -734,14 +932,15 @@
                 parseFloat(input.value);
 
 
-            /*
-               配合比率が設定されている材料なら
-               関連材料を自動計算
-            */
+            /* ------------------------------------------
+               配合比率がある材料
+            ------------------------------------------ */
 
             if (
+
                 materialRatios[material] &&
                 !isNaN(value)
+
             ) {
 
                 const ratio =
@@ -753,9 +952,10 @@
                 ).forEach(
                     ([component, componentRatio]) => {
 
+
                         const componentInput =
                             entry.querySelector(
-                                `[data-material="${component}"]`
+                                `[data-material="${escapeHtml(component)}"]`
                             );
 
 
@@ -789,25 +989,32 @@
 
 
         /* ==================================================
-           時刻を変換
+           時刻フォーマット
         ================================================== */
 
         function formatTime(time) {
 
             if (!time) {
+
                 return "";
+
             }
 
 
-            const [
-                hourString,
-                minute
-            ] =
+            const parts =
                 time.split(":");
 
 
+            const hourString =
+                parts[0];
+
+
+            const minute =
+                parts[1];
+
+
             let hour =
-                parseInt(hourString);
+                parseInt(hourString, 10);
 
 
             const ampm =
@@ -821,7 +1028,9 @@
 
 
             if (hour === 0) {
+
                 hour = 12;
+
             }
 
 
@@ -839,40 +1048,51 @@
             const lines = [];
 
 
-            weightTypes.forEach(material => {
+            weightTypes.forEach(
+                material => {
 
-                const input =
-                    entry.querySelector(
-                        `[data-material="${material}"]`
+                    const input =
+                        entry.querySelector(
+                            `[data-material="${escapeHtml(material)}"]`
+                        );
+
+
+                    if (!input) {
+
+                        return;
+
+                    }
+
+
+                    const value =
+                        parseFloat(input.value);
+
+
+                    /*
+                       0g、未入力は表示しない
+                    */
+
+                    if (
+
+                        isNaN(value) ||
+                        value <= 0
+
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    lines.push(
+
+                        `${material}\n` +
+                        `${formatWeight(value)}g`
+
                     );
 
-
-                if (!input) {
-                    return;
                 }
-
-
-                const value =
-                    parseFloat(input.value);
-
-
-                /*
-                   0g、未入力は表示しない
-                */
-
-                if (
-                    isNaN(value) ||
-                    value <= 0
-                ) {
-                    return;
-                }
-
-
-                lines.push(
-                    `${material}\n${formatWeight(value)}g`
-                );
-
-            });
+            );
 
 
             return lines.join("\n");
@@ -881,7 +1101,7 @@
 
 
         /* ==================================================
-           重量表示の小数処理
+           重量の小数処理
         ================================================== */
 
         function formatWeight(value) {
@@ -894,139 +1114,84 @@
 
 
         /* ==================================================
-           コピー用テキストを作成
+           出力更新
         ================================================== */
 
         function updateOutput() {
 
             const allEntries =
-                document.querySelectorAll(".entry");
+                document.querySelectorAll(
+                    ".entry"
+                );
 
 
             const lines = [];
 
 
-            allEntries.forEach(entry => {
-
-                const type =
-                    entry.querySelector(
-                        ".type-select"
-                    ).value;
+            allEntries.forEach(
+                entry => {
 
 
-                /* ------------------------------
-                   Weight
-                ------------------------------ */
-
-                if (
-                    entry.classList.contains(
-                        "weight-mode"
-                    )
-                ) {
-
-                    const weightOutput =
-                        getWeightOutput(entry);
-
-
-                    if (weightOutput) {
-
-                        lines.push(
-                            `${type}\n${weightOutput}`
+                    const select =
+                        entry.querySelector(
+                            ".type-select"
                         );
+
+
+                    if (!select) {
+
+                        return;
 
                     }
 
 
-                    return;
-
-                }
-
-
-                /* ------------------------------
-                   Time
-                ------------------------------ */
-
-                const start =
-                    entry.querySelector(
-                        ".start-time"
-                    ).value;
-
-
-                const finish =
-                    entry.querySelector(
-                        ".finish-time"
-                    ).value;
-
-
-                if (
-                    start &&
-                    finish
-                ) {
-
-                    lines.push(
-
-                        `${type}\n` +
-                        `start ${formatTime(start)}\n` +
-                        `finish ${formatTime(finish)}`
-
-                    );
-
-                }
-
-                else if (start) {
-
-                    lines.push(
-
-                        `${type}\n` +
-                        `start ${formatTime(start)}`
-
-                    );
-
-                }
-
-                else if (finish) {
-
-                    lines.push(
-
-                        `${type}\n` +
-                        `finish ${formatTime(finish)}`
-
-                    );
-
-                }
-
-            });
-
-
-            document.getElementById(
-                "output"
-            ).textContent =
-
-                lines.length
-                    ? lines.join("\n\n")
-                    : "Your copied text will appear here.";
-
-        }
-
-
-        /* ==================================================
-           現在のページ状態を保存
-        ================================================== */
-
-        function saveCurrentData() {
-
-            const savedEntries = [];
-
-
-            document
-                .querySelectorAll(".entry")
-                .forEach(entry => {
-
                     const type =
-                        entry.querySelector(
-                            ".type-select"
-                        ).value;
+                        select.value;
 
+
+                    /* ==========================
+                       Weight
+                    =========================== */
+
+                    if (
+
+                        entry.classList.contains(
+                            "weight-mode"
+                        )
+
+                    ) {
+
+                        const weightOutput =
+                            getWeightOutput(
+                                entry
+                            );
+
+
+                        /*
+                           重量が入力されている場合だけ
+                           出力
+                        */
+
+                        if (weightOutput) {
+
+                            lines.push(
+
+                                `${type}\n` +
+                                weightOutput
+
+                            );
+
+                        }
+
+
+                        return;
+
+                    }
+
+
+                    /* ==========================
+                       Time
+                    =========================== */
 
                     const start =
                         entry.querySelector(
@@ -1040,46 +1205,152 @@
                         ).value;
 
 
-                    const mode =
-                        entry.classList.contains(
-                            "weight-mode"
-                        )
-                            ? "weight"
-                            : "time";
+                    if (
+                        start &&
+                        finish
+                    ) {
+
+                        lines.push(
+
+                            `${type}\n` +
+                            `start ${formatTime(start)}\n` +
+                            `finish ${formatTime(finish)}`
+
+                        );
+
+                    }
+
+                    else if (start) {
+
+                        lines.push(
+
+                            `${type}\n` +
+                            `start ${formatTime(start)}`
+
+                        );
+
+                    }
+
+                    else if (finish) {
+
+                        lines.push(
+
+                            `${type}\n` +
+                            `finish ${formatTime(finish)}`
+
+                        );
+
+                    }
+
+                }
+            );
 
 
-                    const materials = {};
+            document.getElementById(
+                "output"
+            ).textContent =
+
+                lines.length
+
+                    ? lines.join("\n\n")
+
+                    : "Your copied text will appear here.";
+
+        }
 
 
-                    entry
-                        .querySelectorAll(
-                            ".material-input"
-                        )
-                        .forEach(input => {
+        /* ==================================================
+           現在の状態を保存
+        ================================================== */
 
-                            materials[
-                                input.dataset.material
-                            ] =
-                                input.value;
+        function saveCurrentData() {
+
+            const savedEntries = [];
+
+
+            document
+                .querySelectorAll(".entry")
+                .forEach(
+                    entry => {
+
+
+                        const select =
+                            entry.querySelector(
+                                ".type-select"
+                            );
+
+
+                        const start =
+                            entry.querySelector(
+                                ".start-time"
+                            );
+
+
+                        const finish =
+                            entry.querySelector(
+                                ".finish-time"
+                            );
+
+
+                        if (
+                            !select ||
+                            !start ||
+                            !finish
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        const mode =
+                            entry.classList.contains(
+                                "weight-mode"
+                            )
+                                ? "weight"
+                                : "time";
+
+
+                        const materials = {};
+
+
+                        entry
+                            .querySelectorAll(
+                                ".material-input"
+                            )
+                            .forEach(
+                                input => {
+
+                                    materials[
+                                        input.dataset.material
+                                    ] =
+                                        input.value;
+
+                                }
+                            );
+
+
+                        savedEntries.push({
+
+                            type:
+                                select.value,
+
+                            mode:
+                                mode,
+
+                            start:
+                                start.value,
+
+                            finish:
+                                finish.value,
+
+                            materials:
+                                materials
 
                         });
 
-
-                    savedEntries.push({
-
-                        type: type,
-
-                        mode: mode,
-
-                        start: start,
-
-                        finish: finish,
-
-                        materials: materials
-
-                    });
-
-                });
+                    }
+                );
 
 
             localStorage.setItem(
@@ -1108,7 +1379,7 @@
 
 
             /* ------------------------------------------
-               保存データがない場合
+               保存データなし
             ------------------------------------------ */
 
             if (!saved) {
@@ -1127,8 +1398,13 @@
 
 
                 if (
-                    !Array.isArray(savedEntries) ||
+
+                    !Array.isArray(
+                        savedEntries
+                    ) ||
+
                     savedEntries.length === 0
+
                 ) {
 
                     addEntry();
@@ -1141,7 +1417,9 @@
                 savedEntries.forEach(
                     savedEntry => {
 
-                        addEntry(savedEntry);
+                        addEntry(
+                            savedEntry
+                        );
 
                     }
                 );
@@ -1154,8 +1432,13 @@
             catch (error) {
 
                 console.error(
-                    "保存データの復元に失敗しました。",
+                    "保存データの読み込みに失敗しました。",
                     error
+                );
+
+
+                localStorage.removeItem(
+                    DATA_SAVE_KEY
                 );
 
 
@@ -1167,29 +1450,39 @@
 
 
         /* ==================================================
-           保存データを削除
+           保存データをクリア
         ================================================== */
 
         function clearSavedData() {
 
             const result =
                 confirm(
+
                     "保存されている作業データをすべて削除しますか？"
+
                 );
 
 
             if (!result) {
+
                 return;
+
             }
 
+
+            /* 保存データ削除 */
 
             localStorage.removeItem(
                 DATA_SAVE_KEY
             );
 
 
+            /* 画面を空にする */
+
             entries.innerHTML = "";
 
+
+            /* 新しい1行を作る */
 
             addEntry();
 
@@ -1215,9 +1508,12 @@
 
 
             if (
+
                 !text ||
+
                 text ===
                 "Your copied text will appear here."
+
             ) {
 
                 return;
@@ -1246,20 +1542,24 @@
                     "✓ Copied!";
 
 
-                setTimeout(() => {
+                setTimeout(
+                    () => {
 
-                    button.textContent =
-                        original;
+                        button.textContent =
+                            original;
 
-                }, 1200);
-
+                    },
+                    1200
+                );
 
             }
 
             catch (error) {
 
                 alert(
+
                     "Copy failed. Please select and copy the text manually."
+
                 );
 
             }
@@ -1289,10 +1589,7 @@
 
 
         /* ==================================================
-           ページ読み込み
-           
-           保存データがあれば復元
-           なければ最初の1行を表示
+           ページ開始
         ================================================== */
 
         loadSavedData();

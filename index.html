@@ -1,11 +1,19 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>Work Log</title>
 
+
     <style>
+
         /* ==============================
            基本設定
         ============================== */
@@ -111,20 +119,6 @@
             color: white;
         }
 
-        .add-type-btn,
-        .add-weight-type-btn {
-            background: #e5e7eb;
-            color: #222;
-        }
-
-        .add-type-btn {
-            margin-top: 10px;
-        }
-
-        .add-weight-type-btn {
-            margin-top: 8px;
-        }
-
         .delete-btn {
             background: #fee2e2;
             color: #dc2626;
@@ -202,24 +196,6 @@
             margin-top: 10px;
         }
 
-        .weight-type-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .weight-type-select {
-            flex: 1;
-            min-width: 180px;
-        }
-
-        .weight-input-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
         .entry.weight-mode .time-fields {
             display: none;
         }
@@ -228,12 +204,29 @@
             display: flex;
         }
 
+        .material-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .material-name {
+            width: 180px;
+            font-size: 16px;
+        }
+
+        .material-input {
+            width: 130px;
+        }
+
 
         /* ==============================
            スマートフォン用
         ============================== */
 
         @media (max-width: 500px) {
+
             body {
                 padding: 12px;
             }
@@ -244,7 +237,6 @@
             }
 
             .type-select,
-            .weight-type-select,
             input[type="time"],
             input[type="number"] {
                 width: 100%;
@@ -257,9 +249,21 @@
             .time-fields > div {
                 align-items: stretch;
             }
+
+            .material-name {
+                width: 100%;
+            }
+
+            .material-input {
+                width: calc(100% - 30px);
+            }
+
         }
+
     </style>
+
 </head>
+
 
 <body>
 
@@ -273,13 +277,6 @@
         <!-- 項目を追加 -->
         <button class="add-btn" onclick="addEntry()">
             ＋ Add item
-        </button>
-
-        <br>
-
-        <!-- 通常の項目タイプを追加 -->
-        <button class="add-type-btn" onclick="addNewType()">
-            ＋ Add new item type
         </button>
 
         <!-- コピー -->
@@ -296,11 +293,13 @@
 
 
     <script>
+
         /* ==================================================
            初期データ
         ================================================== */
 
         const defaultTypes = [
+
             "Sanding time",
             "Putty apply time",
             "Paint apply time",
@@ -311,28 +310,79 @@
             "-",
             "Material weight",
             "Other"
+
         ];
 
-        const defaultWeightTypes = [
+
+        /* ==================================================
+           Material weight の5種類
+
+           今後材料を増やす場合はここに追加
+        ================================================== */
+
+        const weightTypes = [
+
             "Top cort12",
             "Top cort12 hardner",
             "Top cort12 thinner",
             "Filler5",
             "Filler5 hardner"
+
         ];
 
 
         /* ==================================================
-           保存データを読み込む
+           材料の配合比率
+
+           基準材料を4として計算
+
+           Top cort12
+           4 : 1 : 0.5
+
+           Filler5
+           4 : 1
+        ================================================== */
+
+        const materialRatios = {
+
+            "Top cort12": {
+
+                base: 4,
+
+                components: {
+
+                    "Top cort12 hardner": 1,
+                    "Top cort12 thinner": 0.5
+
+                }
+
+            },
+
+
+            "Filler5": {
+
+                base: 4,
+
+                components: {
+
+                    "Filler5 hardner": 1
+
+                }
+
+            }
+
+        };
+
+
+        /* ==================================================
+           保存データ
         ================================================== */
 
         let types =
-            JSON.parse(localStorage.getItem("workLogTypes")) ||
-            defaultTypes;
+            JSON.parse(
+                localStorage.getItem("workLogTypes")
+            ) || defaultTypes;
 
-        let weightTypes =
-            JSON.parse(localStorage.getItem("workLogWeightTypes")) ||
-            defaultWeightTypes;
 
         const entries =
             document.getElementById("entries");
@@ -349,6 +399,7 @@
 
             entry.className = "entry";
 
+
             entry.innerHTML = `
 
                 <div class="row">
@@ -357,14 +408,19 @@
                         class="type-select"
                         onchange="typeChanged(this)"
                     >
+
                         ${types
                             .map(type => `
+
                                 <option value="${escapeHtml(type)}">
                                     ${escapeHtml(type)}
                                 </option>
+
                             `)
                             .join("")}
+
                     </select>
+
 
                     <button
                         class="delete-btn"
@@ -387,6 +443,7 @@
                     >
                         Time
                     </button>
+
 
                     <button
                         class="weight-mode-btn"
@@ -438,54 +495,41 @@
 
                 <div class="weight-fields">
 
-                    <div class="weight-type-row">
+                    ${weightTypes
+                        .map(type => `
 
-                        <select
-                            class="weight-type-select"
-                            onchange="updateOutput()"
-                        >
+                            <div class="material-row">
 
-                            ${weightTypes
-                                .map(type => `
-                                    <option value="${escapeHtml(type)}">
-                                        ${escapeHtml(type)}
-                                    </option>
-                                `)
-                                .join("")}
+                                <span class="material-name">
+                                    ${escapeHtml(type)}
+                                </span>
 
-                        </select>
+                                <input
+                                    type="number"
+                                    class="material-input"
+                                    data-material="${escapeHtml(type)}"
+                                    placeholder="Weight"
+                                    step="0.1"
+                                    min="0"
+                                    oninput="materialInputChanged(this)"
+                                >
 
-                    </div>
+                                <span>g</span>
 
+                            </div>
 
-                    <div class="weight-input-row">
-
-                        <input
-                            type="number"
-                            class="weight-value"
-                            placeholder="Weight"
-                            step="0.1"
-                            onchange="updateOutput()"
-                        >
-
-                        <span>g</span>
-
-                    </div>
-
-
-                    <button
-                        class="add-weight-type-btn"
-                        onclick="addNewWeightType()"
-                    >
-                        ＋ Add weight type
-                    </button>
+                        `)
+                        .join("")}
 
                 </div>
+
             `;
+
 
             entries.appendChild(entry);
 
             updateOutput();
+
         }
 
 
@@ -498,8 +542,10 @@
             const entry =
                 button.closest(".entry");
 
+
             const timeButton =
                 entry.querySelector(".time-mode");
+
 
             const weightButton =
                 entry.querySelector(".weight-mode-btn");
@@ -510,6 +556,7 @@
                 entry.classList.remove("weight-mode");
 
                 timeButton.classList.add("active");
+
                 weightButton.classList.remove("active");
 
             } else {
@@ -517,10 +564,14 @@
                 entry.classList.add("weight-mode");
 
                 timeButton.classList.remove("active");
+
                 weightButton.classList.add("active");
+
             }
 
+
             updateOutput();
+
         }
 
 
@@ -533,17 +584,14 @@
             const entry =
                 select.closest(".entry");
 
+
             const value =
                 select.value.toLowerCase();
 
 
             /*
-                項目名に以下の文字が入っている場合、
-                自動的にWeightモードへ切り替える
-
-                weight
-                material
-                gram
+               Material weightの場合、
+               自動的にWeightへ切り替え
             */
 
             if (
@@ -563,13 +611,87 @@
                     entry.querySelector(".time-mode"),
                     "time"
                 );
+
             }
+
+        }
+
+
+        /* ==================================================
+           材料重量入力時
+        ================================================== */
+
+        function materialInputChanged(input) {
+
+            const entry =
+                input.closest(".entry");
+
+
+            const material =
+                input.dataset.material;
+
+
+            const value =
+                parseFloat(input.value);
+
+
+            /*
+               配合比率が設定されている材料なら
+               関連材料を自動計算
+            */
+
+            if (
+                materialRatios[material] &&
+                !isNaN(value)
+            ) {
+
+                const ratio =
+                    materialRatios[material];
+
+
+                Object.entries(
+                    ratio.components
+                ).forEach(
+                    ([component, componentRatio]) => {
+
+                        const componentInput =
+                            entry.querySelector(
+                                `[data-material="${component}"]`
+                            );
+
+
+                        if (!componentInput) {
+                            return;
+                        }
+
+
+                        const calculated =
+                            value *
+                            componentRatio /
+                            ratio.base;
+
+
+                        componentInput.value =
+                            Number(
+                                calculated.toFixed(3)
+                            );
+
+                    }
+                );
+
+            }
+
+
+            updateOutput();
+
         }
 
 
         /* ==================================================
            時刻を変換
-           例：10:20 → 10:20am
+           
+           例：
+           10:20 → 10:20am
         ================================================== */
 
         function formatTime(time) {
@@ -578,23 +700,104 @@
                 return "";
             }
 
-            const [hourString, minute] =
+
+            const [
+                hourString,
+                minute
+            ] =
                 time.split(":");
+
 
             let hour =
                 parseInt(hourString);
 
+
             const ampm =
-                hour >= 12 ? "pm" : "am";
+                hour >= 12
+                    ? "pm"
+                    : "am";
+
 
             hour =
                 hour % 12;
+
 
             if (hour === 0) {
                 hour = 12;
             }
 
+
             return `${hour}:${minute}${ampm}`;
+
+        }
+
+
+        /* ==================================================
+           Weight出力
+        ================================================== */
+
+        function getWeightOutput(entry) {
+
+            const lines = [];
+
+
+            weightTypes.forEach(material => {
+
+                const input =
+                    entry.querySelector(
+                        `[data-material="${material}"]`
+                    );
+
+
+                if (!input) {
+                    return;
+                }
+
+
+                const value =
+                    parseFloat(input.value);
+
+
+                /*
+                   0g、未入力は表示しない
+                */
+
+                if (
+                    isNaN(value) ||
+                    value <= 0
+                ) {
+                    return;
+                }
+
+
+                lines.push(
+                    `${material}\n${formatWeight(value)}g`
+                );
+
+            });
+
+
+            return lines.join("\n");
+
+        }
+
+
+        /* ==================================================
+           重量表示の小数処理
+        ================================================== */
+
+        function formatWeight(value) {
+
+            /*
+               100.000 → 100
+               25.000 → 25
+               12.500 → 12.5
+            */
+
+            return Number(
+                value.toFixed(3)
+            ).toString();
+
         }
 
 
@@ -607,13 +810,16 @@
             const allEntries =
                 document.querySelectorAll(".entry");
 
+
             const lines = [];
 
 
             allEntries.forEach(entry => {
 
                 const type =
-                    entry.querySelector(".type-select").value;
+                    entry.querySelector(
+                        ".type-select"
+                    ).value;
 
 
                 /* ------------------------------
@@ -621,28 +827,31 @@
                 ------------------------------ */
 
                 if (
-                    entry.classList.contains("weight-mode")
+                    entry.classList.contains(
+                        "weight-mode"
+                    )
                 ) {
 
-                    const weightType =
-                        entry
-                            .querySelector(".weight-type-select")
-                            .value;
-
-                    const weight =
-                        entry
-                            .querySelector(".weight-value")
-                            .value;
+                    const weightOutput =
+                        getWeightOutput(entry);
 
 
-                    if (weight) {
+                    /*
+                       Material weightを選択していても
+                       全部0gなら何も出力しない
+                    */
+
+                    if (weightOutput) {
 
                         lines.push(
-                            `${type}\n${weightType}\n${weight}g`
+                            `${type}\n${weightOutput}`
                         );
+
                     }
 
+
                     return;
+
                 }
 
 
@@ -651,46 +860,65 @@
                 ------------------------------ */
 
                 const start =
-                    entry
-                        .querySelector(".start-time")
-                        .value;
+                    entry.querySelector(
+                        ".start-time"
+                    ).value;
+
 
                 const finish =
-                    entry
-                        .querySelector(".finish-time")
-                        .value;
+                    entry.querySelector(
+                        ".finish-time"
+                    ).value;
 
 
-                if (start && finish) {
+                if (
+                    start &&
+                    finish
+                ) {
 
                     lines.push(
+
                         `${type}\n` +
                         `start ${formatTime(start)}\n` +
                         `finish ${formatTime(finish)}`
+
                     );
 
-                } else if (start) {
+                }
+
+                else if (start) {
 
                     lines.push(
+
                         `${type}\n` +
                         `start ${formatTime(start)}`
+
                     );
 
-                } else if (finish) {
+                }
+
+                else if (finish) {
 
                     lines.push(
+
                         `${type}\n` +
                         `finish ${formatTime(finish)}`
+
                     );
+
                 }
 
             });
 
 
-            document.getElementById("output").textContent =
+            document.getElementById(
+                "output"
+            ).textContent =
+
                 lines.length
                     ? lines.join("\n\n")
                     : "Your copied text will appear here.";
+
         }
 
 
@@ -702,27 +930,40 @@
 
             updateOutput();
 
+
             const text =
-                document.getElementById("output").textContent;
+                document.getElementById(
+                    "output"
+                ).textContent;
 
 
             if (
                 !text ||
-                text === "Your copied text will appear here."
+                text ===
+                "Your copied text will appear here."
             ) {
+
                 return;
+
             }
 
 
             try {
 
-                await navigator.clipboard.writeText(text);
+                await navigator.clipboard.writeText(
+                    text
+                );
+
 
                 const button =
-                    document.querySelector(".copy-btn");
+                    document.querySelector(
+                        ".copy-btn"
+                    );
+
 
                 const original =
                     button.textContent;
+
 
                 button.textContent =
                     "✓ Copied!";
@@ -736,126 +977,16 @@
                 }, 1200);
 
 
-            } catch (error) {
+            }
+
+            catch (error) {
 
                 alert(
                     "Copy failed. Please select and copy the text manually."
                 );
-            }
-        }
 
-
-        /* ==================================================
-           通常の項目タイプを追加
-        ================================================== */
-
-        function addNewType() {
-
-            const newType =
-                prompt("Enter a new item type:");
-
-
-            if (
-                !newType ||
-                !newType.trim()
-            ) {
-                return;
             }
 
-
-            const cleanType =
-                newType.trim();
-
-
-            if (types.includes(cleanType)) {
-                return;
-            }
-
-
-            types.push(cleanType);
-
-
-            localStorage.setItem(
-                "workLogTypes",
-                JSON.stringify(types)
-            );
-
-
-            // 現在表示されている全プルダウンに追加
-
-            document
-                .querySelectorAll(".type-select")
-                .forEach(select => {
-
-                    const option =
-                        document.createElement("option");
-
-                    option.value =
-                        cleanType;
-
-                    option.textContent =
-                        cleanType;
-
-                    select.appendChild(option);
-                });
-        }
-
-
-        /* ==================================================
-           Weight項目を追加
-        ================================================== */
-
-        function addNewWeightType() {
-
-            const newType =
-                prompt("Enter a new weight type:");
-
-
-            if (
-                !newType ||
-                !newType.trim()
-            ) {
-                return;
-            }
-
-
-            const cleanType =
-                newType.trim();
-
-
-            if (
-                weightTypes.includes(cleanType)
-            ) {
-                return;
-            }
-
-
-            weightTypes.push(cleanType);
-
-
-            localStorage.setItem(
-                "workLogWeightTypes",
-                JSON.stringify(weightTypes)
-            );
-
-
-            // 現在表示されている全Weightプルダウンに追加
-
-            document
-                .querySelectorAll(".weight-type-select")
-                .forEach(select => {
-
-                    const option =
-                        document.createElement("option");
-
-                    option.value =
-                        cleanType;
-
-                    option.textContent =
-                        cleanType;
-
-                    select.appendChild(option);
-                });
         }
 
 
@@ -866,12 +997,17 @@
         function escapeHtml(text) {
 
             const div =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
+
 
             div.textContent =
                 text;
 
+
             return div.innerHTML;
+
         }
 
 
@@ -884,4 +1020,6 @@
     </script>
 
 </body>
+
 </html>
+```

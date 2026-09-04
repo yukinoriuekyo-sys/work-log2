@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -86,6 +85,36 @@
             font-size: 13px;
             color: #666;
             margin: 8px 0 4px;
+        }
+
+
+        /* ==============================
+           T番号 / FNC番号
+        ============================== */
+
+        .t-number-entry {
+            margin-bottom: 12px;
+        }
+
+        .t-number-entry label {
+            font-size: 15px;
+            font-weight: 600;
+            min-width: 80px;
+        }
+
+        .t-number-entry span {
+            font-size: 16px;
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        #t-number,
+        #fnc-number {
+            width: 130px;
+        }
+
+        .fnc-label {
+            margin-left: 18px;
         }
 
 
@@ -269,6 +298,10 @@
                 width: calc(100% - 30px);
             }
 
+            .fnc-label {
+                margin-left: 0;
+            }
+
         }
 
     </style>
@@ -281,6 +314,57 @@
     <div class="container">
 
         <h1>Work Log</h1>
+
+
+        <!-- ==========================================
+             作業用 T-番号 / FNC番号
+        =========================================== -->
+
+        <div class="entry t-number-entry">
+
+            <div class="row">
+
+                <label for="t-number">
+                    T-Number
+                </label>
+
+                <span>
+                    T-
+                </span>
+
+                <input
+                    type="number"
+                    id="t-number"
+                    min="0"
+                    step="1"
+                    placeholder="番号"
+                    oninput="headerNumberChanged()"
+                >
+
+
+                <label
+                    for="fnc-number"
+                    class="fnc-label"
+                >
+                    FNC-Number
+                </label>
+
+                <span>
+                    FNC-
+                </span>
+
+                <input
+                    type="number"
+                    id="fnc-number"
+                    min="0"
+                    step="1"
+                    placeholder="番号"
+                    oninput="headerNumberChanged()"
+                >
+
+            </div>
+
+        </div>
 
 
         <!-- ==========================================
@@ -428,6 +512,9 @@
 
         const DATA_SAVE_KEY =
             "workLogCurrentData";
+
+        const T_NUMBER_SAVE_KEY =
+            "workLogTNumber";
 
 
         /* ==================================================
@@ -755,6 +842,54 @@
 
 
         /* ==================================================
+           T-番号 / FNC番号入力変更
+        ================================================== */
+
+        function headerNumberChanged() {
+
+            updateOutput();
+
+            saveHeaderNumbers();
+
+        }
+
+
+        /* ==================================================
+           T-番号 / FNC番号 保存
+        ================================================== */
+
+        function saveHeaderNumbers() {
+
+            const tNumberInput =
+                document.getElementById("t-number");
+
+            const fncNumberInput =
+                document.getElementById("fnc-number");
+
+
+            if (tNumberInput) {
+
+                localStorage.setItem(
+                    T_NUMBER_SAVE_KEY,
+                    tNumberInput.value
+                );
+
+            }
+
+
+            if (fncNumberInput) {
+
+                localStorage.setItem(
+                    "workLogFncNumber",
+                    fncNumberInput.value
+                );
+
+            }
+
+        }
+
+
+        /* ==================================================
            項目削除
         ================================================== */
 
@@ -892,6 +1027,7 @@
 
             }
 
+
             else {
 
                 setMode(
@@ -1014,7 +1150,10 @@
 
 
             let hour =
-                parseInt(hourString, 10);
+                parseInt(
+                    hourString,
+                    10
+                );
 
 
             const ampm =
@@ -1121,12 +1260,99 @@
 
             const allEntries =
                 document.querySelectorAll(
-                    ".entry"
+                    ".entry:not(.t-number-entry)"
                 );
 
 
             const lines = [];
 
+
+            /* ==========================
+               固定ヘッダー
+
+               今日の日付
+               T-番号
+               FNC番号
+            =========================== */
+
+            const now =
+                new Date();
+
+
+            const year =
+                now.getFullYear();
+
+
+            const month =
+                String(
+                    now.getMonth() + 1
+                ).padStart(2, "0");
+
+
+            const day =
+                String(
+                    now.getDate()
+                ).padStart(2, "0");
+
+
+            lines.push(
+                `${year}/${month}/${day}`
+            );
+
+
+            /* ==========================
+               T-番号
+            =========================== */
+
+            const tNumberInput =
+                document.getElementById(
+                    "t-number"
+                );
+
+
+            const tNumber =
+                tNumberInput
+                    ? tNumberInput.value.trim()
+                    : "";
+
+
+            if (tNumber) {
+
+                lines.push(
+                    `T-${tNumber}`
+                );
+
+            }
+
+
+            /* ==========================
+               FNC番号
+            =========================== */
+
+            const fncNumberInput =
+                document.getElementById(
+                    "fnc-number"
+                );
+
+
+            const fncNumber =
+                fncNumberInput
+                    ? fncNumberInput.value.trim()
+                    : "";
+
+
+            if (fncNumber) {
+
+                lines.push(
+                    `FNC-${fncNumber}`
+                );
+
+            }
+
+
+            /* ==========================
+               作業内容
+            =========================== */
 
             allEntries.forEach(
                 entry => {
@@ -1220,6 +1446,7 @@
 
                     }
 
+
                     else if (start) {
 
                         lines.push(
@@ -1230,6 +1457,7 @@
                         );
 
                     }
+
 
                     else if (finish) {
 
@@ -1269,7 +1497,7 @@
 
 
             document
-                .querySelectorAll(".entry")
+                .querySelectorAll(".entry:not(.t-number-entry)")
                 .forEach(
                     entry => {
 
@@ -1372,6 +1600,60 @@
 
         function loadSavedData() {
 
+            /* ------------------------------------------
+               T-番号を復元
+            ------------------------------------------ */
+
+            const savedTNumber =
+                localStorage.getItem(
+                    T_NUMBER_SAVE_KEY
+                );
+
+
+            const tNumberInput =
+                document.getElementById(
+                    "t-number"
+                );
+
+
+            if (
+                tNumberInput &&
+                savedTNumber !== null
+            ) {
+
+                tNumberInput.value =
+                    savedTNumber;
+
+            }
+
+
+            /* ------------------------------------------
+               FNC番号を復元
+            ------------------------------------------ */
+
+            const savedFncNumber =
+                localStorage.getItem(
+                    "workLogFncNumber"
+                );
+
+
+            const fncNumberInput =
+                document.getElementById(
+                    "fnc-number"
+                );
+
+
+            if (
+                fncNumberInput &&
+                savedFncNumber !== null
+            ) {
+
+                fncNumberInput.value =
+                    savedFncNumber;
+
+            }
+
+
             const saved =
                 localStorage.getItem(
                     DATA_SAVE_KEY
@@ -1429,6 +1711,7 @@
 
             }
 
+
             catch (error) {
 
                 console.error(
@@ -1475,6 +1758,26 @@
             localStorage.removeItem(
                 DATA_SAVE_KEY
             );
+
+
+            localStorage.removeItem(
+                T_NUMBER_SAVE_KEY
+            );
+
+
+            localStorage.removeItem(
+                "workLogFncNumber"
+            );
+
+
+            document.getElementById(
+                "t-number"
+            ).value = "";
+
+
+            document.getElementById(
+                "fnc-number"
+            ).value = "";
 
 
             /* 画面を空にする */
@@ -1554,6 +1857,7 @@
 
             }
 
+
             catch (error) {
 
                 alert(
@@ -1600,4 +1904,3 @@
 </body>
 
 </html>
-```
